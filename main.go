@@ -15,10 +15,10 @@ func main() {
 		fmt.Println("Incorrect amount of inputs :(, try again with the correct amount!")
 		return
 	}
-	inputfilename := os.Args[1] //taking the name of the file to read and storing it
-	outputfilename:= os.Args[2] //taking the second input of the file and storing it in outputfilename
+	inputfilename := os.Args[1]  //taking the name of the file to read and storing it
+	outputfilename := os.Args[2] //taking the second input of the file and storing it in outputfilename
 
-	if os.Args[1] != "sample.txt" || os.Args[2] != "result.txt"{
+	if os.Args[1] != "sample.txt" || os.Args[2] != "result.txt" {
 		fmt.Println("Error: invalid file names, only sample.txt and results.txt allowed in their respective orders")
 		os.Exit(0)
 	}
@@ -50,7 +50,6 @@ func main() {
 
 	fmt.Println("Successfully wrote modified content to", outputfilename)
 }
-
 
 func modifyContent(s string) string {
 	// Define patterns for each type of transformation
@@ -233,24 +232,26 @@ func formatText(text string) string {
 	// 1. Remove spaces before specified punctuation marks
 	text = regexp.MustCompile(`\s+([.,!?;:])`).ReplaceAllString(text, "$1")
 
-	// 2. Remove spaces after punctuation
-	text = regexp.MustCompile(`([.,!?;:])\s+`).ReplaceAllString(text, "$1 ")
+	// 2. Ensure there is a single space after commas
+	text = regexp.MustCompile(`,\s*`).ReplaceAllString(text, ", ")
 
-	// 3. Handle ellipses and groups of exclamations/questions
-	text = regexp.MustCompile(`\.\.\.|!{2,}|[!?]{2,}`).ReplaceAllString(text, "$0")
+	// 3. Ensure no space after other punctuation marks
+	text = regexp.MustCompile(`([!?;:])\s*`).ReplaceAllString(text, "$1")
 
-	// 4. Remove spaces around single quotes
+	// 4. Handle ellipses
+	text = regexp.MustCompile(`\s*\.\.\.\s*`).ReplaceAllString(text, "...")
+
+	// 5. Remove spaces around single quotes
 	text = regexp.MustCompile(`\s*'\s*`).ReplaceAllString(text, "'")
 
-	// 5. Handle multiple words within apostrophes
-	text = regexp.MustCompile(`'\s+([^']+?)\s+'`).ReplaceAllString(text, "'$1'")
+	// 6. Support various punctuation groups
+	text = regexp.MustCompile(`!{2,}|[!?]{2,}`).ReplaceAllString(text, "$0")
 
-	// 6. Change "a" to "an" before words starting with vowels or 'h'
+	// 7. Change "a" to "an" before words starting with vowels or 'h'
 	text = TransformArticles(text)
 
 	return text
 }
-
 func TransformArticles(text string) string {
 	// Define a list of vowels and 'h'
 	vowels := "aeiouh"
@@ -277,5 +278,3 @@ func writeToFile(filename, content string) error {
 	_, err = io.WriteString(file, content) // Write the content
 	return err
 }
-
-
