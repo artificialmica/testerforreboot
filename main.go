@@ -192,7 +192,7 @@ func lowConvert(text string) string {
 }
 
 func capConvert(text string) string {
-	capPattern := regexp.MustCompile(`((\w+\s*)+)\s*\(cap\s*(,\s*\d+)?\)`)
+	capPattern := regexp.MustCompile(`((\w+\s*)+)\s*\(cap(?:,\s*(\d+))?\)`)
 
 	matches := capPattern.FindAllStringSubmatch(text, -1) // find all submatches
 
@@ -239,7 +239,7 @@ func formatText(text string) string {
 	text = regexp.MustCompile(`([!?;:])\s*`).ReplaceAllString(text, "$1")
 
 	// 4. Handle ellipses
-	text = regexp.MustCompile(`\s*\.\.\.\s*`).ReplaceAllString(text, "...")
+	text = regexp.MustCompile(`\s*\.\.\.\s*`).ReplaceAllString(text, "... ")
 
 	// 5. Remove spaces around single quotes
 	text = regexp.MustCompile(`\s*'\s*`).ReplaceAllString(text, "'")
@@ -253,19 +253,9 @@ func formatText(text string) string {
 	return text
 }
 func TransformArticles(text string) string {
-	// Define a list of vowels and 'h'
-	vowels := "aeiouh"
-
-	// Use a regex to match "a" followed by spaces and then a word
-	re := regexp.MustCompile(`(?i)\ba\s+([a-zA-Z])`)
-	return re.ReplaceAllStringFunc(text, func(match string) string {
-		// Check the first character of the following word
-		firstChar := strings.ToLower(string(match[2]))
-		if strings.Contains(vowels, firstChar) {
-			return "an " + match[3:] // Use match[3:] to keep the rest of the string
-		}
-		return match
-	})
+	// Change "a" to "an" before words starting with a vowel or silent 'h'
+	text = regexp.MustCompile(`\ba\s+([aeiouAEIOU]|h[aeiou])`).ReplaceAllString(text, "an $1")
+	return text
 }
 
 func writeToFile(filename, content string) error {
