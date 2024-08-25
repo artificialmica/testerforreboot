@@ -55,9 +55,9 @@ func modifyContent(s string) string {
 	// Define patterns for each type of transformation
 	hexPattern := regexp.MustCompile(`([0-9A-Fa-f]+)\s*\(hex\)`)
 	binPattern := regexp.MustCompile(`([01]+)\s*\(bin\)`)
-	upPattern := regexp.MustCompile(`((\w+\s*)+)\s*\(up(?:,\s*(\d+))?\)`)
-	lowPattern := regexp.MustCompile(`((\w+\s*)+)\s*\(low(?:,\s*(\d+))?\)`)
-	capPattern := regexp.MustCompile(`((\w+\s*)+)\s*\(cap(?:,\s*(\d+))?\)`)
+	upPattern := regexp.MustCompile(`((\w+\s*[.,!?;:]*\s*)+)\s*\(up(?:,\s*(\d+))?\)`)
+	lowPattern := regexp.MustCompile(`((\w+\s*[.,!?;:]*\s*)+)\s*\(low(?:,\s*(\d+))?\)`)
+	capPattern := regexp.MustCompile(`((\w+\s*[.,!?;:]*\s*)+)\s*\(cap(?:,\s*(\d+))?\)`)
 
 	// Apply hex conversion
 	if hexPattern.MatchString(s) {
@@ -136,7 +136,7 @@ func binConvert(text string) string {
 }
 
 func upConvert(text string) string {
-	upPattern := regexp.MustCompile(`((\w+\s*)+)\s*\(up(?:,\s*(\d+))?\)`)
+	upPattern := regexp.MustCompile(`((\w+\s*[.,!?;:]*\s*)+)\s*\(up(?:,\s*(\d+))?\)`)
 	// regular expression pattern meaning 1 or more words with optional spaces followed by (up) and optionally followed by , n; n being a number
 	matches := upPattern.FindAllStringSubmatch(text, -1)
 
@@ -164,7 +164,7 @@ func upConvert(text string) string {
 }
 
 func lowConvert(text string) string {
-	lowPattern := regexp.MustCompile(`((\w+\s*)+)\s*\(low(?:,\s*(\d+))?\)`)
+	lowPattern := regexp.MustCompile(`((\w+\s*[.,!?;:]*\s*)+)\s*\(low(?:,\s*(\d+))?\)`)
 	// regular expression pattern meaning 1 or more words with optional spaces followed by (low) and optionally followed by , n; n being a number
 	matches := lowPattern.FindAllStringSubmatch(text, -1)
 
@@ -192,7 +192,7 @@ func lowConvert(text string) string {
 }
 
 func capConvert(text string) string {
-	capPattern := regexp.MustCompile(`((\w+\s*)+)\s*\(cap(?:,\s*(\d+))?\)`)
+	capPattern := regexp.MustCompile(`((\w+\s*[.,!?;:]*\s*)+)\s*\(cap(?:,\s*(\d+))?\)`)
 
 	matches := capPattern.FindAllStringSubmatch(text, -1) // find all submatches
 
