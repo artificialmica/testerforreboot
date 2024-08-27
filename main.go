@@ -38,8 +38,6 @@ func main() {
 	}
 
 	modifiedContent := modifyContent(string(content)) //invokes modifycontent which will call all functions needed and return the final answer
-	fmt.Println("Modified Content:")
-	fmt.Println(modifiedContent)
 
 	// Write the modified content to the output file
 	err = writeToFile(outputfilename, modifiedContent)
@@ -85,6 +83,7 @@ func modifyContent(s string) string {
 	}
 
 	// Format text
+	s = formatApostrophes(s)
 	s = formatText(s)
 
 	return s
@@ -95,8 +94,6 @@ func hexConvert(text string) string {
 	//make sure to use the spicy single quotations near the 1, saved me a lot of trouble
 	matches := hexPattern.FindAllStringSubmatch(text, -1)
 	//checking all instances of (hex)
-	fmt.Println("Match results:", matches)
-	//displaying our finds :)
 
 	modifiedtext := text
 	for _, match := range matches {
@@ -118,8 +115,6 @@ func binConvert(text string) string {
 	//make sure to use the spicy single quotations near the 1, saved me a lot of trouble
 	matches := binPattern.FindAllStringSubmatch(text, -1)
 	//checking all instances of (hex)
-	fmt.Println("Bin Match results:", matches)
-	//displaying our finds :)
 
 	modifiedtext := text
 	for _, match := range matches {
@@ -143,7 +138,7 @@ func upConvert(text string) string {
 	for _, match := range matches {
 		words := strings.Fields(match[1]) //splits the words, based on the first capturing group, which is the words split after whitespaces
 		numWords := len(words)            //gets the number of words found in the match
-		n := numWords                     //Initializes n to the total number of words, meaning all words will be transformed by default.
+		n := 1                            //Initializes n to the total number of words, meaning all words will be transformed by default.
 		if len(match) > 3 && match[3] != "" {
 			n, _ = strconv.Atoi(match[3]) // Get the number after ", "
 		}
@@ -164,63 +159,69 @@ func upConvert(text string) string {
 }
 
 func lowConvert(text string) string {
-	lowPattern := regexp.MustCompile(`((\w+\s*[.,!?;:]*\s*)+)\s*\(low(?:,\s*(\d+))?\)`)
-	// regular expression pattern meaning 1 or more words with optional spaces followed by (low) and optionally followed by , n; n being a number
+	lowPattern := regexp.MustCompile(`((?:\w+\s*)+)\s*\(low(?:,\s*(\d+))?\)`)
 	matches := lowPattern.FindAllStringSubmatch(text, -1)
-
-	for _, match := range matches {
-		words := strings.Fields(match[1]) //splits matched words into slice of strings
-		numWords := len(words)            //gets the number of words found in the match
-		n := numWords                     //Initializes n to the total number of words, meaning all words will be transformed by default.
-		if len(match) > 3 && match[3] != "" {
-			n, _ = strconv.Atoi(match[3]) // Get the number after ", "
-		}
-		if n > numWords { //Ensures n doesn’t exceed the actual number of words in case a larger number was specified.
-			n = numWords
-		}
-
-		for i := 0; i < n; i++ {
-			words[i] = strings.ToLower(words[i]) //Loops through the first n words and converts each one to uppercase using strings.ToUpper().
-		}
-		//Uses strings.Join() to combine the transformed words back into a single string.
-		//Replaces the original part of text (indicated by match[0]) with the updated string.
-
-		text = strings.ReplaceAll(text, match[0], strings.Join(words, " "))
-	}
-	return text
-
-}
-
-func capConvert(text string) string {
-	capPattern := regexp.MustCompile(`((\w+\s*[.,!?;:]*\s*)+)\s*\(cap(?:,\s*(\d+))?\)`)
-
-	matches := capPattern.FindAllStringSubmatch(text, -1) // find all submatches
 
 	for _, match := range matches {
 		words := strings.Fields(match[1])
 		numWords := len(words)
-		n := numWords
-		// Check for a specific number
-		if len(match) > 3 && match[3] != "" {
-			n, _ = strconv.Atoi(match[3]) // Get the number after ", "
+		n := 1 // Default to 1 word if n is not specified
+
+		if len(match) > 2 && match[2] != "" {
+			n, _ = strconv.Atoi(match[2])
 		}
 
-		// Ensure n doesn't exceed the number of words
 		if n > numWords {
 			n = numWords
 		}
 
-		// Capitalize words
-		for i := 0; i < n; i++ {
-			words[i] = capitalize(words[i])
+		if len(match[2]) == 0 { // If n is not specified
+			if numWords > 0 {
+				words[numWords-1] = strings.ToLower(words[numWords-1])
+			}
+		} else {
+			for i := 0; i < n; i++ {
+				words[i] = strings.ToLower(words[i])
+			}
 		}
 
-		// Replace the matched part in text with the updated words
 		text = strings.ReplaceAll(text, match[0], strings.Join(words, " "))
 	}
 	return text
-
 }
+
+func capConvert(text string) string {
+	capPattern := regexp.MustCompile(`((\w+\s*[.,!?;:]*\s*)+)(\s*\(cap(?:,\s*(\d+))?\))`)
+	matches := capPattern.FindAllStringSubmatch(text, -1)
+
+	for _, match := range matches {
+		words := strings.Fields(match[1])
+		numWords := len(words)
+		n := 1 // Default to 1 word if n is not specified
+
+		if len(match) > 4 && match[4] != "" {
+			n, _ = strconv.Atoi(match[4])
+		}
+
+		if n > numWords {
+			n = numWords
+		}
+
+		if len(match[4]) == 0 { // If n is not specified
+			if numWords > 0 {
+				words[numWords-1] = capitalize(words[numWords-1])
+			}
+		} else {
+			for i := numWords - n; i < numWords; i++ {
+				words[i] = capitalize(words[i])
+			}
+		}
+
+		text = strings.ReplaceAll(text, match[0], strings.Join(words, " "))
+	}
+	return text
+}
+
 func capitalize(word string) string {
 	if len(word) == 0 {
 		return word
@@ -239,22 +240,27 @@ func formatText(text string) string {
 	text = regexp.MustCompile(`([!?;:])\s*`).ReplaceAllString(text, "$1")
 
 	// 4. Handle ellipses
-	text = regexp.MustCompile(`\s*\.\.\.\s*`).ReplaceAllString(text, "... ")
+	//text = regexp.MustCompile(`\s*\.\.\.\s*`).ReplaceAllString(text, "... ")
 
-	// 5. Remove spaces around single quotes
-	text = regexp.MustCompile(`\s*'\s*`).ReplaceAllString(text, "'")
-
-	// 6. Support various punctuation groups
+	// 5. Support various punctuation groups
 	text = regexp.MustCompile(`!{2,}|[!?]{2,}`).ReplaceAllString(text, "$0")
 
-	// 7. Change "a" to "an" before words starting with vowels or 'h'
+	// 6. Change "a" to "an" before words starting with vowels or 'h'
 	text = TransformArticles(text)
 
 	return text
 }
 func TransformArticles(text string) string {
 	// Change "a" to "an" before words starting with a vowel or silent 'h'
-	text = regexp.MustCompile(`\ba\s+([aeiouAEIOU]|h[aeiou])`).ReplaceAllString(text, "an $1")
+	// Handles both lowercase "a" and capitalized "A"
+	text = regexp.MustCompile(`\b[aA]\s+([aeiouAEIOU]|[hH][aeiouAEIOU])`).ReplaceAllStringFunc(text, func(match string) string {
+		// Check if the original "a" was capitalized
+		if match[0] == 'A' {
+			return "An " + match[2:]
+		}
+		return "an " + match[2:]
+	})
+
 	return text
 }
 
@@ -267,4 +273,45 @@ func writeToFile(filename, content string) error {
 
 	_, err = io.WriteString(file, content) // Write the content
 	return err
+}
+func formatApostrophes(text string) string {
+    stri := strings.Split(text, " ")
+
+    // Separate apostrophes
+    for i, char := range stri {
+        if strings.HasPrefix(char, "'") {
+            stri[i] = "' " + strings.TrimPrefix(char, "'")
+        }
+        if strings.HasSuffix(char, "'") {
+            stri[i] = strings.TrimSuffix(char, "'") + " '"
+        }
+    }
+
+    strA := strings.Join(stri, " ")
+    str := strings.Fields(strA)
+
+    c := false
+    for i := 0; i < len(str); i++ {
+        if str[i] == "'" && !c {
+            c = true
+            if i+1 < len(str) {
+                str[i+1] = "'" + str[i+1]
+                str[i] = ""
+            }
+        } else if str[i] == "'" && c {
+            if i > 0 {
+                str[i-1] = str[i-1] + "'"
+            } else {
+                str[i+1] = "'" + str[i+1]
+            }
+            str[i] = ""
+            c = false
+        }
+    }
+
+    strOut := strings.Join(str, " ")
+    strOut = strings.Replace(strOut, " '", "'", -1)
+    strOut = strings.Replace(strOut, "' ", "'", -1)
+
+    return strOut
 }
